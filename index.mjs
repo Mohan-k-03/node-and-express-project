@@ -76,12 +76,21 @@ app.get("/api/users/:id", (req, res) => {
     return res.status(400).send({ msg: "bad Request, invalid Id" });
   }
 
-  // const user = users.find((user) => user.id === id);
-  // if (user) {
-  //   return res.send(user);
-  // }
+  const user = users.find((user) => user.id === id);
+  if (user) {
+    return res.send(user);
+  }
   return res.status(404).send({ msg: "user not found" });
   //   console.log(user)
+});
+
+app.use(express.json());
+app.post("/api/users", (req, res) => {
+  console.log(req.body);
+  const { body } = req;
+  const newUser = { id: users[users.length - 1].id + 1, ...body };
+  users.push(newUser);
+  return res.status(201).send(newUser);
 });
 
 app.listen(PORT, () => {

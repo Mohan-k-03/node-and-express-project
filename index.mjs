@@ -32,9 +32,9 @@ app.get("/api/project", (req, res) => {
 });
 
 app.get("/api/project/:id", (req, res) => {
+  console.log(id);
   const id = parseInt(req.params.id);
 
-  console.log(id);
   if (isNaN(id)) {
     return res.status(400).send({ msg: "item not found" });
   }
@@ -85,6 +85,7 @@ app.get("/api/users/:id", (req, res) => {
 });
 
 app.use(express.json());
+
 app.post("/api/users", (req, res) => {
   console.log(req.body);
   const { body } = req;
@@ -93,9 +94,28 @@ app.post("/api/users", (req, res) => {
   return res.status(201).send(newUser);
 });
 
+app.put("/api/users/:id", (req, res) => {
+  console.log(req);
+  const id = parseInt(req.params.id);
+  // console.log(id)
+  if (isNaN(id)) {
+    return res.status(400).send({ msg: "bad Request, invalid Id" });
+  }
+
+  const userIndex = users.findIndex((user) => user.id === id);
+  if (userIndex === -1) {
+    return res.status(200).send({ msg: "updated put works" });
+  }
+
+  const{body}=res
+  users[userIndex] = { id: id, ...body };
+});
+
 app.listen(PORT, () => {
   console.log(`app is running on ${PORT} `);
 });
 
 // http://localhost:3000/api/users?filter=user_name&value=arul
 // http://localhost:3000/api/project?filter=item&value=ama
+
+//put-update (complete updata)

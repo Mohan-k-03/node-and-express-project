@@ -107,7 +107,7 @@ app.put("/api/users/:id", (req, res) => {
     return res.status(200).send({ msg: "updated put works" });
   }
 
-  const{body}=res
+  const{body}=req
   users[userIndex] = { id: id, ...body };
 });
 

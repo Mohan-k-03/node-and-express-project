@@ -1,13 +1,15 @@
 import express from "express";
+import { use } from "react";
 
 const app = express();
-
 const PORT = 3000;
 
-//project queiry
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.send({ msg: "root" });
 });
+
 const project = [
   { id: 1, item: "amazon-clone " },
   { id: 2, item: "instagram-clone " },
@@ -18,32 +20,33 @@ const project = [
 ];
 
 app.get("/api/project", (req, res) => {
-  const {
-    query: { filter, value },
-  } = req;
-  console.log(req.query);
-  console.log(filter, value);
+  const { filter, value } = req.query;
+
   if (filter && value) {
+    const filterKey = String(filter);
+    const searchValue = String(value).toLowerCase();
+
     return res.send(
-      project.filter((item) => item[filter].toLowerCase().includes(value)),
+      project.filter((item) => String(item[filterKey]).toLowerCase().includes(searchValue)),
     );
   }
-  res.send({ project });
+
+  return res.send({ project });
 });
 
 app.get("/api/project/:id", (req, res) => {
-  console.log(id);
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id, 10);
 
-  if (isNaN(id)) {
+  if (Number.isNaN(id)) {
     return res.status(400).send({ msg: "item not found" });
   }
-  const item = project.find((project) => project.id === id);
+
+  const item = project.find((projectItem) => projectItem.id === id);
   if (item) {
     return res.send(item);
   }
 
-  res.send.parseInt(item);
+  return res.status(404).send({ msg: "project item not found" });
 });
 
 const users = [
@@ -53,41 +56,38 @@ const users = [
   { id: 4, user_name: "revathy" },
   { id: 5, user_name: "muthu" },
 ];
-//query parameter
+
 app.get("/api/users", (req, res) => {
-  const {
-    query: { filter, value },
-  } = req;
-  // console.log(req.query);
-  // console.log(filter, value);
+  const { filter, value } = req.query;
+
   if (filter && value) {
+    const filterKey = String(filter);
+    const searchValue = String(value).toLowerCase();
+
     return res.send(
-      users.filter((user) => user[filter].toLowerCase().includes(value)),
+      users.filter((user) => String(user[filterKey]).toLowerCase().includes(searchValue)),
     );
   }
 
-  res.send({ users });
+  return res.send({ users });
 });
 
 app.get("/api/users/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  // console.log(id)
-  if (isNaN(id)) {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
     return res.status(400).send({ msg: "bad Request, invalid Id" });
   }
 
-  const user = users.find((user) => user.id === id);
+  const user = users.find((userItem) => userItem.id === id);
   if (user) {
     return res.send(user);
   }
+
   return res.status(404).send({ msg: "user not found" });
-  //   console.log(user)
 });
 
-app.use(express.json());
-
 app.post("/api/users", (req, res) => {
-  console.log(req.body);
   const { body } = req;
   const newUser = { id: users[users.length - 1].id + 1, ...body };
   users.push(newUser);
@@ -95,27 +95,58 @@ app.post("/api/users", (req, res) => {
 });
 
 app.put("/api/users/:id", (req, res) => {
-  console.log(req);
-  const id = parseInt(req.params.id);
-  // console.log(id)
-  if (isNaN(id)) {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
     return res.status(400).send({ msg: "bad Request, invalid Id" });
   }
 
   const userIndex = users.findIndex((user) => user.id === id);
   if (userIndex === -1) {
-    return res.status(200).send({ msg: "updated put works" });
+    return res.status(404).send({ msg: "user not found" });
   }
 
   const { body } = req;
-  users[userIndex] = { id: id, ...body };
+  users[userIndex] = { id, ...body };
+  return res.send(users[userIndex]);
 });
 
-app.listen(PORT, () => {
-  console.log(`app is running on ${PORT} `);
+app.patch("/api/users/:id", (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).send({ msg: "bad Request, invalid Id" });
+  }
+
+  const userIndex = users.findIndex((user) => user.id === id);
+  if (userIndex === -1) {
+    return res.status(404).send({ msg: "user not found" });
+  }
+
+  const { body } = req;
+  users[userIndex] = { ...users[userIndex], ...body };
+  return res.send(users[userIndex]);
 });
+app.delete('/api/users/:id',(req,res)=>{
+
+  const id = parseInt(req.params.id, 10);
+  
+  if (Number.isNaN(id)) {
+    return res.status(400).send({ msg: "bad Request, invalid Id" });
+  }
+  
+  const userIndex = users.findIndex((user) => user.id === id);
+  if (userIndex === -1) {
+    return res.status(404).send({ msg: "user not found" });
+  }
+  users.splice(userIndex,1);
+
+  res.sendStatus(200)
+  // const { body } = req;
+  // app.listen(PORT, () => {
+    // console.log(`app is running on ${PORT}`);
+  // });
+})
 
 // http://localhost:3000/api/users?filter=user_name&value=arul
 // http://localhost:3000/api/project?filter=item&value=ama
-
-//put-update (complete updata)

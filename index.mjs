@@ -1,5 +1,6 @@
 import express from "express";
-
+import { createUserValidationSchema } from "./src/validationSchemas.mjs";
+import { validationResult, matchedData, checkSchema } from "express-validator";
 const app = express();
 const PORT = 3000;
 
@@ -124,8 +125,14 @@ app.get("/api/users/:id", (req, res) => {
   return res.status(404).send({ msg: "user not found" });
 });
 
-app.post("/api/users", (req, res) => {
-  const { body } = req;
+app.post("/api/users", checkSchema(createUserValidationSchema), (req, res) => {
+  // console.log(req["express-validator#contexts"]);
+  const result = validationResult(req);
+  if (!result.isEmpty()) {
+    return res.status(400).send({ error: result.array() });
+  }
+  // console.log(result);
+  const body = matchedData(req);
   const newUser = { id: users[users.length - 1].id + 1, ...body };
   users.push(newUser);
   return res.status(201).send(newUser);

@@ -131,6 +131,34 @@ app.post("/api/users", checkSchema(createUserValidationSchema), (req, res) => {
   if (!result.isEmpty()) {
     return res.status(400).send({ error: result.array() });
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // console.log(result);
   const body = matchedData(req);
   const newUser = { id: users[users.length - 1].id + 1, ...body };
@@ -204,3 +232,18 @@ app.delete("/api/users/:id", getUserIndexById, (req, res) => {
 app.listen(PORT, () => {
   console.log(`app is running on ${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

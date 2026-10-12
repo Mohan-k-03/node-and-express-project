@@ -6,5 +6,30 @@ export const createUserValidationSchema = {
       errorMessage: "user name length requirement not met",
     },
   },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
   age: { notEmpty: { errorMessage: "age not be empty" } },
 };

@@ -1,14 +1,17 @@
+import { cookie } from "express-validator";
 import express from "express";
 import { createUserValidationSchema } from "./src/validationSchemas.mjs";
 import { validationResult, matchedData, checkSchema } from "express-validator";
+import userRouter from "./src/routes/users.mjs";
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
+app.use(userRouter);
+const PORT = 3000;
 
-app.get("/", (req, res) => {
-  res.send({ msg: "root" });
-});
+// res.send({ msg: "root" });
+// app.get("/", (req, res) => {
+// });
 
 const project = [
   { id: 1, item: "amazon-clone " },
@@ -132,33 +135,6 @@ app.post("/api/users", checkSchema(createUserValidationSchema), (req, res) => {
     return res.status(400).send({ error: result.array() });
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   // console.log(result);
   const body = matchedData(req);
   const newUser = { id: users[users.length - 1].id + 1, ...body };
@@ -233,17 +209,7 @@ app.listen(PORT, () => {
   console.log(`app is running on ${PORT}`);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+app.get("/jjj", (req, res) => {
+  res.cookie("codeword", "idk", { maxAge: 60000 });
+  res.send({msg:'root'})
+});

@@ -4,8 +4,34 @@ import { createUserValidationSchema } from "./src/validationSchemas.mjs";
 import { validationResult, matchedData, checkSchema } from "express-validator";
 import userRouter from "./src/routes/users.mjs";
 const app = express();
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import passport from "passport";
+import LocalStrategy from 'passport-local'
 
 app.use(express.json());
+app.use(
+  session({
+    secret: "romba secret",
+    saveUninitialized: false,
+    resave: false,
+    cookie: { maxAge: 60000 },
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(
+  new LocalStrategy((user_name, password, done) => {
+    const user = users.find((user) => user.user_name == user_name);
+    if (!user) {
+      return done(null, false, { message: "invalid" });
+    }
+    if (user.password !== password) {
+      return done(null, false, { message: "incorrect password" });
+    }
+    return done(null, user);
+  }),
+);
 app.use(userRouter);
 const PORT = 3000;
 
@@ -75,11 +101,11 @@ app.get("/api/project/:id", getProductIndexById, (req, res) => {
 });
 
 const users = [
-  { id: 1, user_name: "mohan" },
-  { id: 2, user_name: "arul" },
-  { id: 3, user_name: "kumar" },
-  { id: 4, user_name: "revathy" },
-  { id: 5, user_name: "muthu" },
+  { id: 1, user_name: "mohan", password: "1234" },
+  { id: 2, user_name: "arul", password: "12354" },
+  { id: 3, user_name: "kumar", password: "223" },
+  { id: 4, user_name: "revathy", password: "221" },
+  { id: 5, user_name: "muthu", password: "33" },
 ];
 
 const getUserIndexById = (req, res, next) => {
@@ -211,5 +237,8 @@ app.listen(PORT, () => {
 
 app.get("/jjj", (req, res) => {
   res.cookie("codeword", "idk", { maxAge: 60000 });
-  res.send({msg:'root'})
+  console.log(req.session);
+  console.log(req.session.id);
+
+  res.send({ msg: "root" });
 });

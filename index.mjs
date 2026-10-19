@@ -7,7 +7,7 @@ const app = express();
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
-import LocalStrategy from 'passport-local'
+import LocalStrategy from "passport-local";
 
 app.use(express.json());
 app.use(
@@ -21,17 +21,31 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(
-  new LocalStrategy((user_name, password, done) => {
-    const user = users.find((user) => user.user_name == user_name);
-    if (!user) {
-      return done(null, false, { message: "invalid" });
-    }
-    if (user.password !== password) {
-      return done(null, false, { message: "incorrect password" });
-    }
-    return done(null, user);
-  }),
+  new LocalStrategy(
+    { usernameField: "user_name", passwordField: "password" },
+    (user_name, password, done) => {
+      const user = users.find((user) => user.user_name == user_name);
+      if (!user) {
+        return done(null, false, { message: "invalid" });
+      }
+      if (user.password !== password) {
+        return done(null, false, { message: "incorrect password" });
+      }
+      return done(null, user);
+    },
+  ),
 );
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  const user = user.find((u) => {
+    u.id === id;
+  });
+  done(null, user || false);
+});
 app.use(userRouter);
 const PORT = 3000;
 
@@ -241,4 +255,17 @@ app.get("/jjj", (req, res) => {
   console.log(req.session.id);
 
   res.send({ msg: "root" });
+});
+
+app.post("/api/login", (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
+    if (err) return next(err);
+    if (!user) {
+      return res.status(401).json({ message: info?.message || "login" });
+    }
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      return res.json({ message: "login success", user });
+    });
+  })(req, res, next);
 });

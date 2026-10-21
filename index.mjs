@@ -3,12 +3,19 @@ import express from "express";
 import { createUserValidationSchema } from "./src/validationSchemas.mjs";
 import { validationResult, matchedData, checkSchema } from "express-validator";
 import userRouter from "./src/routes/users.mjs";
-const app = express();
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import LocalStrategy from "passport-local";
+import mongoose from "mongoose";
 
+const app = express();
+mongoose
+  .connect("mongodb://localhost/express")
+  .then(() => {
+    console.log("db connected");
+  })
+  .catch((err) => console.log(`errorff ${err}`));
 app.use(express.json());
 app.use(
   session({
@@ -168,19 +175,28 @@ app.get("/api/users/:id", (req, res) => {
   return res.status(404).send({ msg: "user not found" });
 });
 
-app.post("/api/users", checkSchema(createUserValidationSchema), (req, res) => {
-  // console.log(req["express-validator#contexts"]);
-  const result = validationResult(req);
-  if (!result.isEmpty()) {
-    return res.status(400).send({ error: result.array() });
-  }
+app.post(
+  "/api/users",
+  checkSchema(createUserValidationSchema),
+  async (req, res) => {
+    // console.log(req["express-validator#contexts"]);
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).send({ error: result.array() });
+    }
 
-  // console.log(result);
-  const body = matchedData(req);
-  const newUser = { id: users[users.length - 1].id + 1, ...body };
-  users.push(newUser);
-  return res.status(201).send(newUser);
-});
+    // console.log(result);
+    const body = matchedData(req);
+    const newUser = new User(body);
+    try {
+      const savedUser = await newUser.save();
+      return res.status(201).send(newUser);
+    } catch (err) {
+      console.log(err);
+      return res.status(400).send({ msg: "user not there" });
+    }
+  },
+);
 
 app.put("/api/users/:id", getUserIndexById, (req, res) => {
   //  making a function instead of writeing everytime i use getuserindexbyid

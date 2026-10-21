@@ -1,3 +1,4 @@
+import { User } from "./src/mongoose/user.mjs";
 import { cookie } from "express-validator";
 import express from "express";
 import { createUserValidationSchema } from "./src/validationSchemas.mjs";
@@ -30,16 +31,24 @@ app.use(passport.session());
 passport.use(
   new LocalStrategy(
     { usernameField: "user_name", passwordField: "password" },
-    (user_name, password, done) => {
-      const user = users.find((user) => user.user_name == user_name);
-      if (!user) {
-        return done(null, false, { message: "invalid" });
+    async (user_name, password, done) => {
+      try {
+        const user = await User.findOne({ user_name: user_name });
+        if (!user) {
+          return done(null, false, { message: "invalid" });
+        }
+        if (user.password !== password) {
+          return done(null, false, { message: "incorrect password" });
+        }
+        return done(null, user);
+      } catch (err) {
+        console.log(err);
+        return done(err, false);
+        // return res.status(404).send({ msg: "not found" });
       }
-      if (user.password !== password) {
-        return done(null, false, { message: "incorrect password" });
-      }
-      return done(null, user);
     },
+
+    // return done(null, user);
   ),
 );
 
@@ -47,11 +56,15 @@ passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-  const user = user.find((u) => {
-    u.id === id;
-  });
-  done(null, user || false);
+passport.deserializeUser(async (id, done) => {
+  // const user = user.find((u) => {
+  // u.id === id;
+  try {
+    const user = await User.findById({ id });
+  } catch (err) {
+    console.log(err);
+    done(err, false);
+  }
 });
 app.use(userRouter);
 const PORT = 3000;

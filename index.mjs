@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import LocalStrategy from "passport-local";
 import mongoose from "mongoose";
+import { comparePassword, hashPassword } from "./src/utils/helper.mjs";
 
 const app = express();
 mongoose
@@ -37,7 +38,7 @@ passport.use(
         if (!user) {
           return done(null, false, { message: "invalid" });
         }
-        if (user.password !== password) {
+        if (comparePassword(password , user.password)) {
           return done(null, false, { message: "incorrect password" });
         }
         return done(null, user);
@@ -200,6 +201,7 @@ app.post(
 
     // console.log(result);
     const body = matchedData(req);
+    body.password=hashPassword(body.password);
     const newUser = new User(body);
     try {
       const savedUser = await newUser.save();

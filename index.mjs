@@ -1,3 +1,4 @@
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "./src/mongoose/user.mjs";
 import { cookie } from "express-validator";
 import express from "express";
@@ -12,6 +13,16 @@ import mongoose from "mongoose";
 import { comparePassword, hashPassword } from "./src/utils/helper.mjs";
 
 const app = express();
+const PORT = 3000;
+const googleClientID = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+
+if (!googleClientID || !googleClientSecret) {
+  throw new Error(
+    "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+  );
+}
+
 mongoose
   .connect("mongodb://localhost/express")
   .then(() => {
@@ -38,7 +49,7 @@ passport.use(
         if (!user) {
           return done(null, false, { message: "invalid" });
         }
-        if (comparePassword(password , user.password)) {
+        if (comparePassword(password, user.password)) {
           return done(null, false, { message: "incorrect password" });
         }
         return done(null, user);
@@ -50,6 +61,37 @@ passport.use(
     },
 
     // return done(null, user);
+  ),
+);
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID:
+        "668229076990-h1235o1c93kh9t7mh57mcud681hqca1p.apps.googleusercontent.com",
+      clientSecret: googleClientSecret,
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ??
+        `http://localhost:${PORT}/auth/google/cb`,
+    },
+    async function (accessToken, refreshToken, profile, done) {
+      try {
+        const user = await User.findOne({ googleId: profile.id });
+        if (user) {
+          return done(null, user);
+        }
+        const email = profile.emails?.[0]?.value;
+
+        const newUser = await User.create({
+          user_name: profile.displayName,
+          googleId: profile.id,
+          email,
+        });
+        return done(null, newUser);
+      } catch (err) {
+        return done(err, null);
+      }
+    },
   ),
 );
 
@@ -68,8 +110,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 app.use(userRouter);
-const PORT = 3000;
-
 // res.send({ msg: "root" });
 // app.get("/", (req, res) => {
 // });
@@ -201,7 +241,7 @@ app.post(
 
     // console.log(result);
     const body = matchedData(req);
-    body.password=hashPassword(body.password);
+    body.password = hashPassword(body.password);
     const newUser = new User(body);
     try {
       const savedUser = await newUser.save();
@@ -300,3 +340,19 @@ app.post("/api/login", (req, res, next) => {
     });
   })(req, res, next);
 });
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  }),
+);
+app.get(
+  "/auth/google/cb",
+  passport.authenticate("google", {
+    failureRedirect: "/",
+  }),
+  (req, res) => {
+    res.send({ msg: "google login success", user: req.user });
+  },
+);

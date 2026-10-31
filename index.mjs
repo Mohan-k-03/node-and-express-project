@@ -9,7 +9,14 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import LocalStrategy from "passport-local";
-import mongoose from "mongoose";
+
+
+
+
+
+
+
+
 import { comparePassword, hashPassword } from "./src/utils/helper.mjs";
 
 const app = express();
